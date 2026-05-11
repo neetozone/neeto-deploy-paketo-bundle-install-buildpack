@@ -123,10 +123,14 @@ func Build(
 				logger.Process("Executing build environment install process")
 
 				duration, err := clock.Measure(func() error {
-					return installProcess.Execute(context.WorkingDir, layer.Path, map[string]string{
+					buildConfig := map[string]string{
 						"path":  layer.Path,
 						"clean": "true",
-					}, environment.KeepGemExtensionBuildFiles)
+					}
+					if environment.BundleWithout != "" {
+						buildConfig["without"] = environment.BundleWithout
+					}
+					return installProcess.Execute(context.WorkingDir, layer.Path, buildConfig, environment.KeepGemExtensionBuildFiles)
 				})
 				if err != nil {
 					return packit.BuildResult{}, err
@@ -214,9 +218,13 @@ func Build(
 						}
 					}
 
+					launchWithout := "development:test"
+					if environment.BundleWithout != "" {
+						launchWithout = environment.BundleWithout
+					}
 					return installProcess.Execute(context.WorkingDir, layer.Path, map[string]string{
 						"path":    layer.Path,
-						"without": "development:test",
+						"without": launchWithout,
 						"clean":   "true",
 					}, environment.KeepGemExtensionBuildFiles)
 				})

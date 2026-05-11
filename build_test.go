@@ -239,6 +239,33 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 				Expect(installProcess.ExecuteCall.Receives.KeepBuildFiles).To(BeTrue())
 			})
 		})
+
+		context("when BundleWithout is set", func() {
+			it.Before(func() {
+				build = bundleinstall.Build(
+					entryResolver,
+					installProcess,
+					sbomGenerator,
+					scribe.NewEmitter(buffer),
+					clock,
+					bundleinstall.Environment{
+						BundleWithout: "development:test",
+					},
+				)
+			})
+
+			it("passes the without config to the build install", func() {
+				_, err := build(buildContext)
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(installProcess.ExecuteCall.CallCount).To(Equal(1))
+				Expect(installProcess.ExecuteCall.Receives.Config).To(Equal(map[string]string{
+					"path":    filepath.Join(layersDir, "build-gems"),
+					"without": "development:test",
+					"clean":   "true",
+				}))
+			})
+		})
 	})
 
 	context("when required during launch", func() {
@@ -391,6 +418,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 				Expect(installProcess.ExecuteCall.Receives.KeepBuildFiles).To(BeTrue())
 			})
 		})
+
 	})
 
 	context("when not required during either build or launch", func() {
@@ -576,6 +604,38 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 			content, err = os.ReadFile(filepath.Join(layersDir, "launch-gems", "ruby", "some-file"))
 			Expect(err).NotTo(HaveOccurred())
 			Expect(string(content)).To(Equal("some-file-contents"))
+		})
+
+		context("when BundleWithout is set", func() {
+			it.Before(func() {
+				build = bundleinstall.Build(
+					entryResolver,
+					installProcess,
+					sbomGenerator,
+					scribe.NewEmitter(buffer),
+					clock,
+					bundleinstall.Environment{
+						BundleWithout: "production:test:staging:heroku",
+					},
+				)
+			})
+
+			it("applies the without config to both the build and launch installs", func() {
+				_, err := build(buildContext)
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(installProcess.ExecuteCall.CallCount).To(Equal(2))
+
+				// The InstallProcess fake only retains the last invocation in
+				// `Receives`, so we assert on the launch (second) invocation
+				// here. Earlier `Build`-only contexts already cover the
+				// build-layer config under the same code path.
+				Expect(installProcess.ExecuteCall.Receives.Config).To(Equal(map[string]string{
+					"path":    filepath.Join(layersDir, "launch-gems"),
+					"without": "production:test:staging:heroku",
+					"clean":   "true",
+				}))
+			})
 		})
 	})
 
