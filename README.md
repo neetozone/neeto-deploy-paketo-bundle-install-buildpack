@@ -14,7 +14,8 @@ To package this buildpack for consumption:
 ./scripts/package.sh --version 0.8.18
 ```
 
-This will build the buildpack for all target architectures specified in `buildpack.toml` (amd64 and arm64 by default) and create architecture-specific archives in the `build/` directory.
+This will build the buildpack for all target architectures specified in `buildpack.toml` (amd64 and arm64 by default)
+and create architecture-specific archives in the `build/` directory.
 
 ## Publishing
 
