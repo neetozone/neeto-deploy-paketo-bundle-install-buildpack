@@ -294,7 +294,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 
 			Expect(layer.Build).To(BeFalse())
 			Expect(layer.Launch).To(BeTrue())
-			Expect(layer.Cache).To(BeFalse())
+			Expect(layer.Cache).To(BeTrue())
 
 			Expect(layer.BuildEnv).To(BeEmpty())
 			Expect(layer.LaunchEnv).To(Equal(packit.Environment{
@@ -537,7 +537,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 
 			Expect(launchLayer.Build).To(BeFalse())
 			Expect(launchLayer.Launch).To(BeTrue())
-			Expect(launchLayer.Cache).To(BeFalse())
+			Expect(launchLayer.Cache).To(BeTrue())
 
 			Expect(launchLayer.BuildEnv).To(BeEmpty())
 			Expect(launchLayer.LaunchEnv).To(Equal(packit.Environment{
@@ -689,7 +689,7 @@ launch = true
 
 			Expect(launchLayer.Build).To(BeFalse())
 			Expect(launchLayer.Launch).To(BeTrue())
-			Expect(launchLayer.Cache).To(BeFalse())
+			Expect(launchLayer.Cache).To(BeTrue())
 
 			Expect(filepath.Join(workingDir, ".bundle", "config")).NotTo(BeAnExistingFile())
 
@@ -763,7 +763,7 @@ launch = true
 
 			Expect(launchLayer.Build).To(BeFalse())
 			Expect(launchLayer.Launch).To(BeTrue())
-			Expect(launchLayer.Cache).To(BeFalse())
+			Expect(launchLayer.Cache).To(BeTrue())
 
 			Expect(filepath.Join(workingDir, ".bundle", "config")).NotTo(BeAnExistingFile())
 
