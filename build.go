@@ -182,7 +182,10 @@ func Build(
 			logger.Debug.Subprocess(layer.Path)
 			logger.Debug.Break()
 
+			// Cache the launch layer too, so later buildpacks (e.g. release running
+			// `bootsnap precompile`) can read launch gems even when the layer is reused.
 			layer.Launch = true
+			layer.Cache = true
 
 			logger.Debug.Process("Checking if the launch environment install process should run")
 			logger.Debug.Break()
@@ -200,6 +203,7 @@ func Build(
 				}
 				should = true
 				layer.Launch = true
+				layer.Cache = true
 			}
 
 			if should {
