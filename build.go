@@ -206,6 +206,12 @@ func Build(
 				layer.Cache = true
 			}
 
+			// Images built before this layer was cached have metadata but no cached gems.
+			if !should && layerIsEmpty(layer.Path) {
+				logger.Process("Cached launch gems not found, reinstalling")
+				should = true
+			}
+
 			if should {
 				logger.Process("Executing launch environment install process")
 
@@ -291,4 +297,9 @@ func Build(
 
 		return packit.BuildResult{Layers: layers}, nil
 	}
+}
+
+func layerIsEmpty(path string) bool {
+	entries, err := os.ReadDir(path)
+	return err != nil || len(entries) == 0
 }
