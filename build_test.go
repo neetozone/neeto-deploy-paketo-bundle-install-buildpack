@@ -666,6 +666,9 @@ launch = true
 	ruby_version = "some-version"
 `), 0600)
 			Expect(err).NotTo(HaveOccurred())
+
+			Expect(os.MkdirAll(filepath.Join(layersDir, "launch-gems"), os.ModePerm)).To(Succeed())
+			Expect(os.WriteFile(filepath.Join(layersDir, "launch-gems", "some-gem"), []byte{}, 0600)).To(Succeed())
 		})
 
 		it("returns a result that reuses the existing layer", func() {
@@ -710,6 +713,40 @@ launch = true
 				"",
 				fmt.Sprintf("  Reusing cached layer %s", filepath.Join(layersDir, "launch-gems")),
 			))
+		})
+	})
+
+	context("when the launch layer metadata matches but its cached gems are missing", func() {
+		it.Before(func() {
+			entryResolver.MergeLayerTypesCall.Returns.Build = true
+			entryResolver.MergeLayerTypesCall.Returns.Launch = true
+
+			installProcess.ShouldRunCall.Returns.Should = false
+
+			Expect(os.MkdirAll(filepath.Join(layersDir, "build-gems"), os.ModePerm)).To(Succeed())
+
+			err := os.WriteFile(filepath.Join(layersDir, "launch-gems.toml"), []byte(`
+launch = true
+
+[metadata]
+	stack = ""
+	cache_sha = "some-checksum"
+	ruby_version = "some-version"
+`), 0600)
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		it("reinstalls the launch gems so the layer has contents to cache", func() {
+			result, err := build(buildContext)
+			Expect(err).NotTo(HaveOccurred())
+
+			launchLayer := result.Layers[len(result.Layers)-1]
+			Expect(launchLayer.Name).To(Equal("launch-gems"))
+			Expect(launchLayer.Cache).To(BeTrue())
+
+			Expect(installProcess.ExecuteCall.CallCount).To(BeNumerically(">=", 1))
+			Expect(installProcess.ExecuteCall.Receives.LayerPath).To(Equal(filepath.Join(layersDir, "launch-gems")))
+			Expect(buffer.String()).To(ContainSubstring("Cached launch gems not found, reinstalling"))
 		})
 	})
 
