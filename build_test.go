@@ -750,6 +750,32 @@ launch = true
 		})
 	})
 
+	context("when the gems changed and a cached launch layer is restored", func() {
+		it.Before(func() {
+			entryResolver.MergeLayerTypesCall.Returns.Build = true
+			entryResolver.MergeLayerTypesCall.Returns.Launch = true
+
+			installProcess.ShouldRunCall.Returns.Should = true
+
+			Expect(os.MkdirAll(filepath.Join(layersDir, "build-gems"), os.ModePerm)).To(Succeed())
+			Expect(os.MkdirAll(filepath.Join(layersDir, "launch-gems"), os.ModePerm)).To(Succeed())
+			Expect(os.WriteFile(filepath.Join(layersDir, "launch-gems", "stale-gem"), []byte{}, 0600)).To(Succeed())
+		})
+
+		it("clears the stale gems before reinstalling", func() {
+			result, err := build(buildContext)
+			Expect(err).NotTo(HaveOccurred())
+
+			launchLayer := result.Layers[len(result.Layers)-1]
+			Expect(launchLayer.Name).To(Equal("launch-gems"))
+			Expect(launchLayer.Launch).To(BeTrue())
+			Expect(launchLayer.Cache).To(BeTrue())
+
+			Expect(filepath.Join(layersDir, "launch-gems", "stale-gem")).NotTo(BeAnExistingFile())
+			Expect(installProcess.ExecuteCall.Receives.LayerPath).To(Equal(filepath.Join(layersDir, "launch-gems")))
+		})
+	})
+
 	context("when trying to reuse a layer but the stack changes", func() {
 		it.Before(func() {
 			entryResolver.MergeLayerTypesCall.Returns.Build = true

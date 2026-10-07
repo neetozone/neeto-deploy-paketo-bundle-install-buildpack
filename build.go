@@ -213,6 +213,16 @@ func Build(
 			}
 
 			if should {
+				// A restored cache leaves old gems here, and copying build-gems over them fails.
+				if !layerIsEmpty(layer.Path) {
+					layer, err = layer.Reset()
+					if err != nil {
+						return packit.BuildResult{}, err
+					}
+					layer.Launch = true
+					layer.Cache = true
+				}
+
 				logger.Process("Executing launch environment install process")
 
 				duration, err := clock.Measure(func() error {
